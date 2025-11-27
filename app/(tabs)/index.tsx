@@ -1,98 +1,238 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useScanHistory } from '@/hooks/useScanHistory';
 import { Link } from 'expo-router';
+import React from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
-export default function HomeScreen() {
+const HomeScreen = () => {
+  const { history, isLoading, error, refresh } = useScanHistory(50);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }, [refresh]);
+
+  // Format timestamp to readable date
+  const formatDate = (timestamp?: number) => {
+    if (!timestamp) return 'Date inconnue';
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={styles.safeArea}>
+      <ThemedView style={styles.container}>
+        <ThemedText style={styles.title}>Historique des scans</ThemedText>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
+        {error && (
+          <View style={styles.errorContainer}>
+            <ThemedText style={styles.errorText}>
+              ❌ Erreur: {error.message}
+            </ThemedText>
+          </View>
+        )}
+
+        {isLoading && !refreshing ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <ThemedText style={styles.loadingText}>Chargement de l'historique...</ThemedText>
+          </View>
+        ) : history.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <ThemedText style={styles.emptyText}>📦 Aucun produit scanné</ThemedText>
+            <ThemedText style={styles.emptySubtext}>
+              Commencez par scanner un code-barres !
+            </ThemedText>
+          </View>
+        ) : (
+          <ScrollView
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
+            <ThemedText style={styles.countText}>
+              {history.length} produit{history.length > 1 ? 's' : ''} scanné{history.length > 1 ? 's' : ''}
+            </ThemedText>
+
+            {history.map((item) => (
+              <Link key={item.id} href={`/details?barcode=${item.barcode}`} asChild>
+                <Pressable style={styles.historyItem}>
+                  <View style={[
+                    styles.itemIcon,
+                    item.is_compatible ? styles.iconCompatible : styles.iconIncompatible
+                  ]}>
+                    <ThemedText style={styles.iconText}>
+                      {item.is_compatible ? '✓' : '✗'}
+                    </ThemedText>
+                  </View>
+
+                  <View style={styles.itemTextContainer}>
+                    <ThemedText style={styles.itemTitle} numberOfLines={1}>
+                      {item.product_name || 'Produit inconnu'}
+                    </ThemedText>
+                    <ThemedText style={styles.itemSubtitle} numberOfLines={1}>
+                      {item.brands || item.barcode}
+                    </ThemedText>
+                    <ThemedText style={styles.itemDate}>
+                      {formatDate(item.scanned_at)}
+                    </ThemedText>
+                  </View>
+
+                  {item.nutriscore_grade && (
+                    <View style={[
+                      styles.nutriscoreBadge,
+                      { backgroundColor: getNutriscoreColor(item.nutriscore_grade) }
+                    ]}>
+                      <ThemedText style={styles.nutriscoreText}>
+                        {item.nutriscore_grade.toUpperCase()}
+                      </ThemedText>
+                    </View>
+                  )}
+                </Pressable>
+              </Link>
+            ))}
+          </ScrollView>
+        )}
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    </SafeAreaView>
   );
-}
+};
+
+// Helper function to get Nutriscore color
+const getNutriscoreColor = (grade: string): string => {
+  const colors: { [key: string]: string } = {
+    'a': '#038141',
+    'b': '#85BB2F',
+    'c': '#FECB02',
+    'd': '#EE8100',
+    'e': '#E63E11',
+  };
+  return colors[grade.toLowerCase()] || '#999999';
+};
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    paddingTop: 35,
+  },
+  countText: {
+    fontSize: 14,
+    opacity: 0.6,
+    marginBottom: 12,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 16,
+    opacity: 0.7,
+  },
+  errorContainer: {
+    padding: 16,
+    backgroundColor: '#ffebee',
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#c62828',
+    fontSize: 14,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  emptyText: {
+    fontSize: 20,
+    fontWeight: '600',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  emptySubtext: {
+    fontSize: 14,
+    opacity: 0.6,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    padding: 12,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  itemIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  iconCompatible: {
+    backgroundColor: '#4CAF50',
+  },
+  iconIncompatible: {
+    backgroundColor: '#F44336',
+  },
+  iconText: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  itemTextContainer: {
+    flex: 1,
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  itemSubtitle: {
+    fontSize: 13,
+    opacity: 0.7,
+    marginBottom: 2,
+  },
+  itemDate: {
+    fontSize: 11,
+    opacity: 0.5,
+  },
+  nutriscoreBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  nutriscoreText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
+
+export default HomeScreen;
