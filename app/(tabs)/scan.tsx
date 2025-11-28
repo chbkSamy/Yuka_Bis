@@ -2,9 +2,11 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { addScanToHistory } from '@/database/queries/history';
+import { getUserPreferences } from '@/database/queries/preferences';
 import { insertProduct } from '@/database/queries/products';
 import { useScanner } from '@/hooks/useScanner';
 import { fetchProductFromApi } from '@/services/openFoodFacts';
+import { checkDietCompatibility } from '@/utils/diet';
 import { BarcodeScanningResult, CameraView } from 'expo-camera';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -70,8 +72,9 @@ const ScanScreen = () => {
         await insertProduct(product);
 
         // 3. Ajouter à l'historique
-        const isCompatible = true;
-        await addScanToHistory(data, isCompatible);
+        const prefs = await getUserPreferences();
+        const compatibility = checkDietCompatibility(product, prefs);
+        await addScanToHistory(data, compatibility.isCompatible);
 
         // Navigation vers la page de détails
         router.push({

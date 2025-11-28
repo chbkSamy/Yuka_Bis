@@ -19,6 +19,14 @@ const MAPPING: IconMapping = {
   'chevron.right': 'chevron-right',
   'camera.fill': 'photo-camera',
   'video.slash.fill': 'videocam-off',
+  'clock.fill': 'history',
+  'exclamationmark.triangle.fill': 'warning',
+  'gear': 'settings',
+  'checkmark.square.fill': 'check-box',
+  'square': 'check-box-outline-blank',
+  'chevron.down': 'expand-more',
+  'qrcode.viewfinder': 'qr-code-scanner',
+  'person.fill': 'person',
 };
 
 /**
@@ -32,7 +40,7 @@ export function IconSymbol({
   color,
   style,
 }: {
-  name: IconSymbolName;
+  name: keyof typeof MAPPING;
   size?: number;
   color: string | OpaqueColorValue;
   style?: StyleProp<TextStyle>;
