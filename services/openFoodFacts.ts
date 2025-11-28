@@ -45,6 +45,7 @@ export const fetchProductFromApi = async (barcode: string): Promise<Product | nu
             is_halal: 0,
             is_kosher: 0,
             is_vegan: product.ingredients_analysis_tags?.includes('en:vegan') ? 1 : 0,
+            is_vegetarian: product.ingredients_analysis_tags?.includes('en:vegetarian') ? 1 : 0,
         };
     } catch (error) {
         console.error('❌ Erreur API Open Food Facts:', error);

@@ -12,6 +12,7 @@ export interface Product {
     is_halal?: number;
     is_kosher?: number;
     is_vegan?: number;
+    is_vegetarian?: number;
     created_at?: number;
 }
 
@@ -25,8 +26,8 @@ export const insertProduct = async (product: Product): Promise<number> => {
         const result = await db.runAsync(
             `INSERT OR REPLACE INTO products
        (barcode, product_name, brands, ingredients_text, allergens, image_url,
-        nutriscore_grade, is_halal, is_kosher, is_vegan)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        nutriscore_grade, is_halal, is_kosher, is_vegan, is_vegetarian)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 product.barcode,
                 product.product_name || null,
@@ -38,6 +39,7 @@ export const insertProduct = async (product: Product): Promise<number> => {
                 product.is_halal || 0,
                 product.is_kosher || 0,
                 product.is_vegan || 0,
+                product.is_vegetarian || 0,
             ]
         );
 

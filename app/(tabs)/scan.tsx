@@ -6,7 +6,8 @@ import { insertProduct } from '@/database/queries/products';
 import { useScanner } from '@/hooks/useScanner';
 import { fetchProductFromApi } from '@/services/openFoodFacts';
 import { BarcodeScanningResult, CameraView } from 'expo-camera';
-import React, { useCallback, useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const ScanScreen = () => {
@@ -14,6 +15,10 @@ const ScanScreen = () => {
   const [isScanning, setIsScanning] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [scannedData, setScannedData] = useState<string | null>(null);
+
+  // Lock to prevent rapid duplicate scans before state updates
+  const scanLock = useRef(false);
+  const [isCameraActive, setIsCameraActive] = useState(false);
 
   useEffect(() => {
     if (hasPermission === false) {
@@ -30,9 +35,26 @@ const ScanScreen = () => {
     }
   }, [hasPermission, requestPermission, openSettings]);
 
-  const handleBarcodeScanned = useCallback(async ({ data }: BarcodeScanningResult) => {
-    if (!isScanning || isLoading || data === scannedData) return;
+  // Reset scanner when screen comes into focus and manage camera active state
+  useFocusEffect(
+    useCallback(() => {
+      setIsCameraActive(true);
+      scanLock.current = false;
+      setIsScanning(true);
+      setIsLoading(false);
+      setScannedData(null);
 
+      return () => {
+        setIsCameraActive(false);
+      };
+    }, [])
+  );
+
+  const handleBarcodeScanned = useCallback(async ({ data }: BarcodeScanningResult) => {
+    // Check lock first to prevent race conditions
+    if (scanLock.current || !isScanning || isLoading || data === scannedData) return;
+
+    scanLock.current = true;
     setScannedData(data);
     setIsScanning(false);
     setIsLoading(true);
@@ -51,20 +73,14 @@ const ScanScreen = () => {
         const isCompatible = true;
         await addScanToHistory(data, isCompatible);
 
-        Alert.alert(
-          "Produit trouvé !",
-          `${product.product_name}\n${product.brands}`,
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                setIsScanning(true);
-                setIsLoading(false);
-                setScannedData(null);
-              }
-            }
-          ]
-        );
+        // Navigation vers la page de détails
+        router.push({
+          pathname: "/details",
+          params: { barcode: data }
+        });
+
+        // Note: We do NOT reset state here.
+        // useFocusEffect will handle the reset when the user returns to this screen.
       } else {
         Alert.alert(
           "Produit inconnu",
@@ -73,6 +89,7 @@ const ScanScreen = () => {
             {
               text: "Scanner à nouveau",
               onPress: () => {
+                scanLock.current = false;
                 setIsScanning(true);
                 setIsLoading(false);
                 setScannedData(null);
@@ -84,6 +101,9 @@ const ScanScreen = () => {
     } catch (error) {
       console.error("Erreur lors du scan:", error);
       Alert.alert("Erreur", "Une erreur est survenue lors du traitement du scan.");
+
+      // Reset on error to allow trying again
+      scanLock.current = false;
       setIsScanning(true);
       setIsLoading(false);
       setScannedData(null);
@@ -113,14 +133,16 @@ const ScanScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <CameraView
-          style={StyleSheet.absoluteFill}
-          facing="back"
-          onBarcodeScanned={isScanning && !isLoading ? handleBarcodeScanned : undefined}
-          barcodeScannerSettings={{
-            barcodeTypes: ["ean13", "ean8", "upc_a", "qr"],
-          }}
-        />
+        {isCameraActive && (
+          <CameraView
+            style={StyleSheet.absoluteFill}
+            facing="back"
+            onBarcodeScanned={isScanning && !isLoading ? handleBarcodeScanned : undefined}
+            barcodeScannerSettings={{
+              barcodeTypes: ["ean13", "ean8", "upc_a", "qr"],
+            }}
+          />
+        )}
 
         {/* Overlay de visée */}
         <View style={styles.overlay}>
