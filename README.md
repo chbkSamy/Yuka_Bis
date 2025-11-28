@@ -15,7 +15,7 @@ node --version           # Vérifier que Node.js est au moins en version 18
 ### 2. Cloner et installer
 ```bash
 git clone https://github.com/chbkSamy/Yuka_Bis.git
-cd HelloWorld
+cd Yuka_Bis
 npm install              # Installe toutes les dépendances nécessaires
 ```
 
