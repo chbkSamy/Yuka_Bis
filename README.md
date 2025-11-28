@@ -70,13 +70,3 @@ eas build --platform all  # Lancer le build multiplateforme
 - SQLite : base locale utilisée pour cache et historique
 
 ***
-
-## 📄 Structure principale du projet
-
-```
-app/            ← Pages avec Expo Router
-components/     ← Composants UI
-database/       ← Requêtes vers base SQLite
-utils/          ← Logique (ex: vérif régimes)
-assets/images/  ← Icônes, splash screens
-```
