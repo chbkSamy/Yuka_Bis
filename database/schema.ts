@@ -22,15 +22,29 @@ export const initializeDatabase = async (): Promise<void> => {
         is_kosher INTEGER DEFAULT 0,
         is_vegan INTEGER DEFAULT 0,
         is_vegetarian INTEGER DEFAULT 0,
+        energy_100g REAL,
+        proteins_100g REAL,
+        fat_100g REAL,
+        carbohydrates_100g REAL,
         created_at INTEGER DEFAULT (strftime('%s', 'now'))
       );
     `);
 
-    // Migration pour ajouter la colonne is_vegetarian si elle n'existe pas (pour les utilisateurs existants)
-    try {
-      await db.execAsync('ALTER TABLE products ADD COLUMN is_vegetarian INTEGER DEFAULT 0');
-    } catch (error) {
-      // La colonne existe probablement déjà, on ignore l'erreur
+    // Migrations pour ajouter les colonnes si elles n'existent pas (pour les utilisateurs existants)
+    const migrations = [
+      'ALTER TABLE products ADD COLUMN is_vegetarian INTEGER DEFAULT 0',
+      'ALTER TABLE products ADD COLUMN energy_100g REAL',
+      'ALTER TABLE products ADD COLUMN proteins_100g REAL',
+      'ALTER TABLE products ADD COLUMN fat_100g REAL',
+      'ALTER TABLE products ADD COLUMN carbohydrates_100g REAL',
+    ];
+
+    for (const migration of migrations) {
+      try {
+        await db.execAsync(migration);
+      } catch (error) {
+        // La colonne existe probablement déjà, on ignore l'erreur
+      }
     }
 
     // Table de l'historique

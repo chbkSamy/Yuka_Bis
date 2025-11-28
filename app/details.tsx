@@ -13,8 +13,10 @@ const DetailScreen = () => {
   const { barcode } = useLocalSearchParams<{ barcode: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isCompatible, setIsCompatible] = useState(true);
   const [incompatibleReasons, setIncompatibleReasons] = useState<string[]>([]);
   const [illicitIngredients, setIllicitIngredients] = useState<string[]>([]);
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   useEffect(() => {
     const loadProductAndPrefs = async () => {
@@ -29,10 +31,10 @@ const DetailScreen = () => {
 
           if (productData) {
             const compatibility = checkDietCompatibility(productData, prefs);
-            if (!compatibility.isCompatible) {
-              setIncompatibleReasons(compatibility.incompatibleReasons);
-              setIllicitIngredients(compatibility.illicitIngredients);
-            }
+            setIsCompatible(compatibility.isCompatible);
+            setIncompatibleReasons(compatibility.incompatibleReasons);
+            setIllicitIngredients(compatibility.illicitIngredients);
+            setWarnings(compatibility.warnings);
           }
         } catch (error) {
           console.error("Error loading product:", error);
@@ -45,8 +47,8 @@ const DetailScreen = () => {
   }, [barcode]);
 
   const renderIngredients = (text: string | undefined) => {
-    if (!text) return "Aucune liste d'ingrédients disponible.";
-    if (illicitIngredients.length === 0) return text;
+    if (!text) return "Aucune liste d&apos;ingrédients disponible.";
+    if (illicitIngredients.length === 0) return <ThemedText style={styles.body}>{text}</ThemedText>;
 
     // Create a regex pattern to match any of the illicit ingredients (case insensitive)
     // We escape special characters just in case
@@ -90,6 +92,17 @@ const DetailScreen = () => {
     );
   }
 
+  const getNutriScoreColor = (grade: string | undefined) => {
+    switch (grade?.toLowerCase()) {
+        case 'a': return '#008C4A'; // Dark Green
+        case 'b': return '#8CC63E'; // Light Green
+        case 'c': return '#FFCC00'; // Yellow
+        case 'd': return '#EE7600'; // Orange
+        case 'e': return '#E4002B'; // Red
+        default: return '#808080'; // Grey for unknown
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <Stack.Screen options={{ title: product.product_name || 'Détails produit' }} />
@@ -120,17 +133,14 @@ const DetailScreen = () => {
 
           <View style={styles.section}>
             <ThemedText type="subtitle">Nutriscore</ThemedText>
-            <ThemedText style={styles.value}>{product.nutriscore_grade?.toUpperCase() ?? 'Inconnu'}</ThemedText>
+            <ThemedText style={[styles.nutriscoreValue, { backgroundColor: getNutriScoreColor(product.nutriscore_grade) }]}>
+                {product.nutriscore_grade?.toUpperCase() ?? 'Inconnu'}
+            </ThemedText>
           </View>
 
           <View style={styles.section}>
             <ThemedText type="subtitle">Ingrédients</ThemedText>
-            {/* We render the ingredients using the helper function */}
-            {typeof renderIngredients(product.ingredients_text) === 'string' ? (
-               <ThemedText style={styles.body}>{renderIngredients(product.ingredients_text)}</ThemedText>
-            ) : (
-               renderIngredients(product.ingredients_text)
-            )}
+            {renderIngredients(product.ingredients_text)}
           </View>
 
            <View style={styles.section}>
@@ -138,6 +148,26 @@ const DetailScreen = () => {
             <ThemedText style={styles.body}>
               {product.allergens || "Aucun allergène signalé."}
             </ThemedText>
+          </View>
+
+          <View style={styles.section}>
+            <ThemedText type="subtitle">Informations Nutritionnelles (pour 100g)</ThemedText>
+            <View style={styles.nutritionFactsContainer}>
+              <ThemedText style={styles.nutritionFactLabel}>Énergie:</ThemedText>
+              <ThemedText style={styles.nutritionFactValue}>{product.energy_100g ? `${product.energy_100g} kcal` : 'N/A'}</ThemedText>
+            </View>
+            <View style={styles.nutritionFactsContainer}>
+              <ThemedText style={styles.nutritionFactLabel}>Protéines:</ThemedText>
+              <ThemedText style={styles.nutritionFactValue}>{product.proteins_100g ? `${product.proteins_100g}g` : 'N/A'}</ThemedText>
+            </View>
+            <View style={styles.nutritionFactsContainer}>
+              <ThemedText style={styles.nutritionFactLabel}>Matières grasses:</ThemedText>
+              <ThemedText style={styles.nutritionFactValue}>{product.fat_100g ? `${product.fat_100g}g` : 'N/A'}</ThemedText>
+            </View>
+            <View style={styles.nutritionFactsContainer}>
+              <ThemedText style={styles.nutritionFactLabel}>Glucides:</ThemedText>
+              <ThemedText style={styles.nutritionFactValue}>{product.carbohydrates_100g ? `${product.carbohydrates_100g}g` : 'N/A'}</ThemedText>
+            </View>
           </View>
 
         </ThemedView>
@@ -192,13 +222,22 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
     padding: 16,
-    backgroundColor: '#f5f5f5',
     borderRadius: 12,
   },
   value: {
     fontSize: 20,
     fontWeight: '600',
     marginTop: 4,
+  },
+  nutriscoreValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff', // White text for contrast on colored background
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: 'flex-start', // To make the background color only around the text
+    marginTop: 8,
   },
   body: {
     fontSize: 16,
@@ -226,6 +265,20 @@ const styles = StyleSheet.create({
   warningText: {
     color: '#fff',
     fontSize: 14,
+  },
+  nutritionFactsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#ccc',
+  },
+  nutritionFactLabel: {
+    fontSize: 16,
+  },
+  nutritionFactValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

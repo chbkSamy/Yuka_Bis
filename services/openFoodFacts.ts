@@ -32,6 +32,8 @@ export const fetchProductFromApi = async (barcode: string): Promise<Product | nu
         const product = data.product;
 
         // Mappage des données de l'API vers notre format local
+        const nutriments = product.nutriments || {};
+
         return {
             barcode: data.code,
             product_name: product.product_name || product.product_name_fr || 'Produit inconnu',
@@ -46,6 +48,11 @@ export const fetchProductFromApi = async (barcode: string): Promise<Product | nu
             is_kosher: 0,
             is_vegan: product.ingredients_analysis_tags?.includes('en:vegan') ? 1 : 0,
             is_vegetarian: product.ingredients_analysis_tags?.includes('en:vegetarian') ? 1 : 0,
+            // Nutritional information per 100g
+            energy_100g: nutriments['energy-kcal_100g'] || nutriments.energy_100g,
+            proteins_100g: nutriments.proteins_100g,
+            fat_100g: nutriments.fat_100g,
+            carbohydrates_100g: nutriments.carbohydrates_100g,
         };
     } catch (error) {
         console.error('❌ Erreur API Open Food Facts:', error);

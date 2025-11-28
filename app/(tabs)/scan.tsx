@@ -77,10 +77,7 @@ const ScanScreen = () => {
         await addScanToHistory(data, compatibility.isCompatible);
 
         // Navigation vers la page de détails
-        router.push({
-          pathname: "/details",
-          params: { barcode: data }
-        });
+        router.push(`/details?barcode=${data}`);
 
         // Note: We do NOT reset state here.
         // useFocusEffect will handle the reset when the user returns to this screen.

@@ -2,8 +2,9 @@ import { Product } from '../database/queries/products';
 
 export interface DietCompatibility {
     isCompatible: boolean;
-    incompatibleReasons: string[];
+    incompatibleReasons: string[]; // For forbidden ingredients
     illicitIngredients: string[];
+    warnings: string[]; // For non-certified messages
 }
 
 
@@ -36,52 +37,41 @@ const FORBIDDEN_INGREDIENTS: Record<string, string[]> = {
 };
 
 export const checkDietCompatibility = (
-    product: Product,
-    preferences: Record<string, boolean>
+  product: Product,
+  preferences: Record<string, boolean>
 ): DietCompatibility => {
-    const reasons: string[] = [];
-    const illicitIngredients: Set<string> = new Set();
-    let isCompatible = true;
-    const ingredientsTextLower = (product.ingredients_text || '').toLowerCase();
+  const incompatibleReasons: string[] = []; 
+  const warnings: string[] = [];
+  const illicitIngredients: Set<string> = new Set();
+  let isCompatible = true;
+  const ingredientsTextLower = (product.ingredients_text || '').toLowerCase();
 
-    // Fonction utilitaire pour vérifier les ingrédients
-    const checkIngredients = (dietName: string, label: string) => {
-        if (preferences[dietName]) {
+  for (const dietName in preferences) {
+    if (preferences[dietName]) {
+      const forbiddenList = FORBIDDEN_INGREDIENTS[dietName] || [];
+      const foundForbidden = forbiddenList.filter(ingredient =>
+          ingredientsTextLower.includes(ingredient.toLowerCase())
+      );
 
-            // Vérification stricte basée sur les tags de l'API
-            if (product.is_vegan === 0 || dietName === 'Vegan') {
-                // Si le produit n'est pas marqué Vegan par Open Food Facts, on le signale.
-                // C'est une mesure de sécurité car la détection par ingrédients est faillible.
-                isCompatible = false;
-                reasons.push(`Non certifié ${label} (selon Open Food Facts)`);
-            }
+      if (foundForbidden.length > 0) {
+        isCompatible = false; // Hard incompatibility found
+        incompatibleReasons.push(`Contient : ${foundForbidden.join(', ')} `);
+        foundForbidden.forEach(ing => illicitIngredients.add(ing));
+      } else {
+          if (dietName === 'Vegan' && product.is_vegan === 0) {
+              warnings.push(`Non certifié Vegan (selon Open Food Facts)`);
+          }
+          if (dietName === 'Vegetarian' && product.is_vegetarian === 0) {
+              warnings.push(`Non certifié Végétarien (selon Open Food Facts)`);
+          }
+      }
+    }
+  }
 
-            if (product.is_vegetarian === 0 || dietName === 'Vegetarian') {
-                isCompatible = false;
-                reasons.push(`Non certifié ${label} (selon Open Food Facts)`);
-            }
-
-            const forbiddenList = FORBIDDEN_INGREDIENTS[dietName] || [];
-            const foundForbidden = forbiddenList.filter(ingredient =>
-                ingredientsTextLower.includes(ingredient.toLowerCase())
-            );
-
-            if (foundForbidden.length > 0) {
-                isCompatible = false;
-                reasons.push(`Contient : ${foundForbidden.join(', ')} (${label})`);
-                foundForbidden.forEach(ing => illicitIngredients.add(ing));
-            }
-        }
-    };
-
-    checkIngredients('Vegan', 'Vegan');
-    checkIngredients('Vegetarian', 'Végétarien');
-    checkIngredients('Halal', 'Halal');
-    checkIngredients('Kosher', 'Casher');
-
-    return {
-        isCompatible,
-        incompatibleReasons: reasons,
-        illicitIngredients: Array.from(illicitIngredients),
-    };
+  return {
+      isCompatible,
+      incompatibleReasons: incompatibleReasons,
+      illicitIngredients: Array.from(illicitIngredients),
+      warnings: warnings, // Return new warnings array
+  };
 };
