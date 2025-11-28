@@ -1,50 +1,157 @@
-# Welcome to your Expo app 👋
+```markdown
+# 🛒 Scanner Alimentaire - Installation Complète Étape par Étape
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+[![Expo SDK 54](https://img.shields.io/badge/Expo-SDK%2054-brightgreen)](https://expo.dev)
+[![React Native 0.81.5](https://img.shields.io/badge/RN-0.81.5-blue.svg)](https://reactnative.dev)
 
-## Get started
+**Scanner de codes-barres alimentaires avec vérification régimes (Vegan, Halal, Casher)**
 
-1. Install dependencies
+## 🚀 INSTALLATION COMPLÈTE (ZÉRO RECHERCHE)
 
-   ```bash
-   npm install
-   ```
+### **ÉTAPE 1 : Prérequis (5 min)**
 
-2. Start the app
+```
+# 1. Vérifier Node.js 18+
+node --version
+# Doit afficher v18.x.x ou supérieur
 
-   ```bash
-   npx expo start
-   ```
+# 2. Installer Expo CLI globalement
+npm install -g @expo/cli@latest
 
-In the output, you'll find options to open the app in a
+# 3. Vérifier installation
+npx expo --version
+```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### **ÉTAPE 2 : Cloner & Installer (2 min)**
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+```
+# 1. Cloner le projet
+git clone https://github.com/VOTRE_USERNAME/scanner-alimentaire.git
+cd scanner-alimentaire
 
-## Get a fresh project
+# 2. Installer TOUTES les dépendances
+npm install
 
-When you're ready, run:
+# 3. Vérifier pas d'erreurs
+npx expo doctor
+```
 
-```bash
+### **ÉTAPE 3 : Premier Lancement (1 min)**
+
+```
+# 4. Lancer le projet
+npx expo start
+
+# 5. Scanner QR code avec Expo Go (iOS/Android)
+# Télécharger Expo Go depuis App Store / Play Store
+```
+
+### **ÉTAPE 4 : Permissions (premier scan)**
+
+```
+📱 App → Scanner produit → Autoriser CAMÉRA
+🌐 Internet → Autorisé par défaut
+```
+
+## ✅ TEST IMMÉDIAT (30 secondes)
+
+```
+1. Ouvrir Expo Go → Scanner QR code généré
+2. Appuyer "Scanner"
+3. Scanner NUTELLA (3017620422003)
+4. Résultat : ❌ ILLICITE (lait, oeuf)
+5. Scanner EAU (3178901000123)
+6. Résultat : ✅ LICITE
+```
+
+## 🛠️ TOUTES LES COMMANDES UTILES
+
+```
+# 🔄 Redémarrer proprement
+npx expo start --clear
+
+# 📱 Android
+npm run android
+
+# 🍎 iOS (Mac uniquement)
+npm run ios
+
+# 🌐 Web
+npm run web
+
+# 🔍 Vérifier config
+npx expo doctor
+
+# 💅 Lint & format
+npm run lint
+
+# 🗑️ Reset base de données (dev)
 npm run reset-project
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 📱 PROBLÈMES COURANTS & SOLUTIONS
 
-## Learn more
+| ❌ ERREUR | ✅ COMMANDE |
+|-----------|-------------|
+| Camera bloquée | `npx expo start --clear` |
+| Metro bloqué | `npx expo start --clear` |
+| SQLite erreur | `npm run reset-project` |
+| "Product not found" | **NORMAL** - Base collaborative |
+| Permissions refusées | Désinstaller/reinstaller Expo Go |
 
-To learn more about developing your project with Expo, look at the following resources:
+## 🚀 BUILD APK/APP STORE (Production)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+# 1. Installer EAS CLI
+npm install -g eas-cli
 
-## Join the community
+# 2. Se connecter Expo
+eas login
 
-Join our community of developers creating universal apps.
+# 3. Configurer build (1 seule fois)
+eas build:configure
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# 4. Générer APK + App Store
+eas build --platform all
+```
+
+## 📊 CE QUI EST INSTALLÉ AUTOMATIQUEMENT
+
+```
+✅ expo-camera@17.0.9 → Scanner codes-barres
+✅ expo-sqlite@16.0.9 → Base locale produits
+✅ expo-router@6.0.13 → Navigation file-based
+✅ New Architecture → Performances x2
+✅ TypeScript → Code typé
+✅ Reanimated v4 → Animations fluides
+```
+
+## 🔌 APIs (ZÉRO CONFIG)
+
+| API | URL | Statut |
+|-----|-----|--------|
+| Open Food Facts | `https://world.openfoodfacts.org/api/v2/product/{barcode}.json` | ✅ Gratuit 100req/s |
+| SQLite Local | Cache + historique | ✅ Illimité |
+
+## 📁 ARBORESCENCE PROJET
+
+```
+📁 app/                 ← Pages (Scanner, Détails)
+📁 components/          ← UI (ThemedText, IconSymbol)
+📁 database/            ← queries/products.ts
+📁 utils/               ← diet.ts (logique régimes)
+📁 assets/images/       ← Icones + splash
+📄 app.json             ← Config Expo
+```
+
+## 🎯 FONCTIONNALITÉS
+
+```
+✅ Scanner EAN-13/8, UPC-A
+✅ Vérif Vegan/Vegetarian/Halal/Kosher
+✅ Nutri-Score coloré
+✅ Ingrédients highlightés (rouge)
+✅ Historique SQLite offline
+✅ Permissions françaises
+```
+
