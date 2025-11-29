@@ -36,19 +36,16 @@ export const fetchProductFromApi = async (barcode: string): Promise<Product | nu
 
         return {
             barcode: data.code,
-            product_name: product.product_name || product.product_name_fr || 'Produit inconnu',
+            product_name: product.product_name_fr || product.product_name || 'Produit inconnu',
             brands: product.brands || '',
-            ingredients_text: product.ingredients_text || product.ingredients_text_fr || '',
+            ingredients_text: product.ingredients_text_fr || product.ingredients_text || '',
             allergens: product.allergens || '',
             image_url: product.image_url || product.image_front_url || '',
             nutriscore_grade: product.nutriscore_grade || '',
-            // Par défaut, on ne peut pas déterminer ces valeurs sans analyse plus poussée
-            // On pourrait utiliser les champs 'labels_tags' ou 'ingredients_analysis_tags' de l'API pour plus de précision
             is_halal: 0,
             is_kosher: 0,
             is_vegan: product.ingredients_analysis_tags?.includes('en:vegan') ? 1 : 0,
             is_vegetarian: product.ingredients_analysis_tags?.includes('en:vegetarian') ? 1 : 0,
-            // Nutritional information per 100g
             energy_100g: nutriments['energy-kcal_100g'] || nutriments.energy_100g,
             proteins_100g: nutriments.proteins_100g,
             fat_100g: nutriments.fat_100g,
