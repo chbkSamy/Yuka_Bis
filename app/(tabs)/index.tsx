@@ -1,13 +1,20 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useScanHistory } from '@/hooks/useScanHistory';
-import { Link } from 'expo-router';
+import { Link, useFocusEffect } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
 const HomeScreen = () => {
   const { history, isLoading, error, refresh } = useScanHistory(50);
   const [refreshing, setRefreshing] = React.useState(false);
+
+  // Refresh history when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
