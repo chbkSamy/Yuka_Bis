@@ -86,7 +86,8 @@ Lien vers la maquette:
 ### Schéma d’architecture
 
 Schéma d’architecture :
-![Schéma d’architecture](assets/images/App-mobile%20archi.drawio.png)
+
+(si mode sombre, cliquer droit sur l'image et choisir "ouvrir l'image dans un nouvel onglet" afin de voir le schéma correctement)
 
 
 ***
