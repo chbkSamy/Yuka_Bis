@@ -70,3 +70,31 @@ eas build --platform all  # Lancer le build multiplateforme
 - SQLite : base locale utilisée pour cache et historique
 
 ***
+
+## 🎨 Design & Organisation du projet
+
+### Design
+
+Lien vers la maquette:
+👉 [Maquette du projet](https://miro.com/app/board/uXjVJqyYjQo=/)
+
+![Aperçu UI](assets/images/maquette.png)
+
+
+***
+
+### Schéma d’architecture
+
+Schéma d’architecture :
+👉 [Schéma d’architecture](assets/images/App-mobile%20archi.drawio.png)
+
+
+***
+
+### Organisation du travail (Trello)
+
+Lien vers le tableau Trello du projet :
+👉 [Tableau Trello du projet](https://trello.com/b/2uh3KSrR/scanneraliment)
+
+
+***
